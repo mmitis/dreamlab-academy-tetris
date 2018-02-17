@@ -1,0 +1,23 @@
+
+
+#board {
+    position: relative;
+    border: 1px solid black;
+    margin: 0 auto;
+}
+
+.block {
+    position: absolute;
+    border: 1px solid black;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+}
+
+.block-color-red {
+    background: red;
+}
+
+.block-color-blue {
+    background: blue;
+}
