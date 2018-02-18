@@ -29,9 +29,9 @@ function setupBoard(boardContainer, sizeX, sizeY, fieldSize) {
 
     // return empty array of block
     let boardArr = [];
-    for (let i = 0; i < sizeY; i++) {
+    for (let i = 0; i < sizeX; i++) {
         boardArr[i] = [];
-        for (let j = 0; j < sizeX; j++) {
+        for (let j = 0; j < sizeY; j++) {
             // fill with the empty value
             boardArr[i][j] = null;
         }
@@ -50,10 +50,10 @@ function updateFields(boardSetup) {
             // if field is setup - manipulate it
             if (field) {
                 // check if something is below or there is a floor
-                const canMove = i + 1 < boardSetup.length && boardSetup[i + 1][j] == null;
+                const canMove = j + 1 < boardSetup[i].length && boardSetup[i][j + 1] == null;
                 if (canMove) {
                     // move to the bottom by one
-                    boardSetup[i + 1][j] = field;
+                    boardSetup[i][j + 1] = field;
                     boardSetup[i][j] = null;
                 } else {
                     // if element cannot move, and was controlled by user before - block it!
@@ -86,8 +86,8 @@ function getElementsMoving(boardSetup) {
  */
 function drawBoard(boardContainer, boardSetup, fieldSize) {
     boardContainer.innerHTML = '';
-    boardSetup.forEach(function (row, columnIndex) {
-        row.forEach(function (field, rowIndex) {
+    boardSetup.forEach(function (row, rowIndex) {
+        row.forEach(function (field, columnIndex) {
             if (field) {
                 let element = document.createElement('div');
                 // set absolute position with top/left CSS properties
@@ -108,25 +108,16 @@ function drawBoard(boardContainer, boardSetup, fieldSize) {
 }
 
 /**
- * Refresh he score
- * @param {HTMLElement} scoreContainer - handler to element in DOM
- * @param {Number}      score - user score
- */
-function drawScore(scoreContainer, score = 0) {
-    scoreContainer.innerText = `Score : ${score} points`;
-}
-
-/**
  * Adds single block to the field data
  * @param {Array}       boardSetup - array with the field data
  * @param {Number}      posX - position on the board X
  * @param {Number}      posY - position on the board Y
  * @param {Array}       blockTypes - types of the  block to use
  */
-function addBlock(boardSetup, posY, posX, blockTypes = Config.BLOCKTYPES) {
+function addBlock(boardSetup, posX, posY, blockTypes = Config.BLOCKTYPES) {
     // line above - default value is used. If you don't pass blockTypes to the function
     // execution Config.BLOCKTYPES will be used
-    boardSetup[posY][posX] = {
+    boardSetup[posX][posY] = {
         // rand the block type
         type: blockTypes[Math.floor(Math.random() * blockTypes.length)],
         // set that the block is moving from the start
@@ -140,76 +131,54 @@ function addBlock(boardSetup, posY, posX, blockTypes = Config.BLOCKTYPES) {
  */
 function addSegment(boardSetup) {
     // calculate the center of the board
-    const center = Math.floor(boardSetup[0].length / 2);
+    const center = Math.floor(boardSetup.length / 2);
     // add 4 blocks
-    addBlock(boardSetup, 0, center);
-    addBlock(boardSetup, 1, center);
-    addBlock(boardSetup, 0, center + 1);
-    addBlock(boardSetup, 1, center + 1);
+    addBlock(boardSetup, center, 0);
+    addBlock(boardSetup, center, 1);
+    addBlock(boardSetup, center + 1, 0);
+    addBlock(boardSetup, center + 1, 1);
 }
 
 function moveLeft(boardSetup) {
-    // find top right corner of the segment
-    const coords = findCornerElementMoving(boardSetup);
-    // check if user can still move (board borders && if there is enough space)
-    const canMove = coords.x - 1 >= 0 && boardSetup[coords.y][coords.x - 1] == null &&
-        boardSetup[coords.y + 1][coords.x - 1] == null;
-    if (canMove) {
-        // rewrite fields in top row
-        boardSetup[coords.y][coords.x - 1] = boardSetup[coords.y][coords.x];
-        boardSetup[coords.y][coords.x] = boardSetup[coords.y][coords.x + 1];
-        boardSetup[coords.y][coords.x + 1] = null;
-        // rewrite fields in second row
-        boardSetup[coords.y + 1][coords.x - 1] = boardSetup[coords.y + 1][coords.x];
-        boardSetup[coords.y + 1][coords.x] = boardSetup[coords.y + 1][coords.x + 1];
-        boardSetup[coords.y + 1][coords.x + 1] = null;
-    }
-}
-
-
-function moveRight(boardSetup) {
-    // find top right corner of the segment
-    const coords = findCornerElementMoving(boardSetup);
-    // check if user can still move (board borders && if there is enough space)
-    const canMove = coords.x + 2 < boardSetup[coords.y].length && boardSetup[coords.y][coords.x + 2] == null &&
-        boardSetup[coords.y + 1][coords.x + 2] == null;
-    if (canMove) {
-        // rewrite fields in top row
-        boardSetup[coords.y][coords.x + 2] = boardSetup[coords.y][coords.x + 1];
-        boardSetup[coords.y][coords.x + 1] = boardSetup[coords.y][coords.x];
-        boardSetup[coords.y][coords.x] = null;
-
-        // rewrite fields in second row
-        boardSetup[coords.y + 1][coords.x + 2] = boardSetup[coords.y + 1][coords.x + 1];
-        boardSetup[coords.y + 1][coords.x + 1] = boardSetup[coords.y + 1][coords.x];
-        boardSetup[coords.y + 1][coords.x] = null;
-    }
-}
-
-/**
- * Search for the row where all blocks are the same
- * @param {Array}       boardSetup - array with the field data
- * @returns {number}    rowsScored - number of the rows cleared
- */
-function clearRows(boardSetup) {
-    let rowsScored = 0;
-    for (let i = 0; i < boardSetup.length; i++) {
-        if (boardSetup[i][0]) {
-            const pattern = boardSetup[i][0];
-            const hasToBeClear = boardSetup[i].every(function (block) {
-                return block && block.run && block.type === pattern.type;
-            });
-
-            if (hasToBeClear) {
-                // add one point per cleared row
-                rowsScored++;
-                // remove them if all are the same
-                boardSetup[i] = boardSetup[i].map(() => null);
+    for (let i = 0; i <= boardSetup.length - 1; i++) {
+        for (let j = boardSetup[i].length - 1; j >= 0; j--) {
+            const field = boardSetup[i][j];
+            if (field && field.run) {
+                const canMove = i - 1 >= 0 && boardSetup[i - 1][j] == null;
+                if (canMove) {
+                    boardSetup[i - 1][j] = field;
+                    boardSetup[i][j] = null;
+                }
             }
         }
     }
-    // return the number of the scored rows
-    return rowsScored;
+}
+
+function moveRight(boardSetup) {
+    for (let i = boardSetup.length - 1; i >= 0; i--) {
+        for (let j = boardSetup[i].length - 1; j >= 0; j--) {
+            const field = boardSetup[i][j];
+            if (field && field.run) {
+                const canMove = i + 1 < boardSetup.length && boardSetup[i + 1][j] == null;
+                if (canMove) {
+                    boardSetup[i + 1][j] = field;
+                    boardSetup[i][j] = null;
+                }
+            }
+        }
+    }
+}
+
+function findPattern(boardSetup){
+    for (let i = 0; i < boardSetup.length; i++) {
+        if(boardSetup[j][0]){
+            for (let j = 0; j < boardSetup[i].length; j++) {
+                // check if element exists and is moving
+
+            }
+        }
+
+    }
 }
 
 /**
@@ -220,12 +189,12 @@ function rotate(boardSetup) {
     // find top corner of the moving block
     const coords = findCornerElementMoving(boardSetup);
     // save single block as temporary
-    const tmp = boardSetup[coords.y][coords.x];
+    const tmp = boardSetup[coords.x][coords.y];
     // rewrite all fields 'by one' to rotate
-    boardSetup[coords.y][coords.x] = boardSetup[coords.y][coords.x + 1];
-    boardSetup[coords.y][coords.x + 1] = boardSetup[coords.y + 1][coords.x + 1];
-    boardSetup[coords.y + 1][coords.x + 1] = boardSetup[coords.y + 1][coords.x];
-    boardSetup[coords.y + 1][coords.x] = tmp;
+    boardSetup[coords.x][coords.y] = boardSetup[coords.x][coords.y + 1];
+    boardSetup[coords.x][coords.y + 1] = boardSetup[coords.x + 1][coords.y + 1];
+    boardSetup[coords.x + 1][coords.y + 1] = boardSetup[coords.x + 1][coords.y];
+    boardSetup[coords.x + 1][coords.y] = tmp;
 }
 
 /**
@@ -240,12 +209,12 @@ function findCornerElementMoving(boardSetup) {
             // check if element exists and is moving
             if (boardSetup[i][j] && boardSetup[i][j].run) {
                 // return values as simple object and break the for-loop
-                return {y: i, x: j};
+                return {x: i, y: j};
             }
         }
     }
     // if not found - return empty data
-    return {y: null, x: null};
+    return {x: null, y: null};
 }
 
 
@@ -255,8 +224,6 @@ function runTheGame() {
     const scoreRef = document.getElementById('game-score');
     // create new empty array for the game - with selected configuration (width, height of the board, size of the single block)
     const boardSetup = setupBoard(boardRef, Config.WIDTH, Config.HEIGHT, Config.FIELDSIZE);
-
-    let score = 0;
 
     // add event listener which is going to be executed on every key down
     document.addEventListener("keydown", function (event) {
@@ -284,8 +251,7 @@ function runTheGame() {
         drawBoard(boardRef, boardSetup, Config.FIELDSIZE);
         // make all updates of the fields
         updateFields(boardSetup);
-        score += clearRows(boardSetup);
-        drawScore(scoreRef, score);
+
         // if there is no element which is moving - create the new one
         if (getElementsMoving(boardSetup) === 0) {
             // adds segment

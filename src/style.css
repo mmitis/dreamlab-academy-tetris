@@ -1,23 +1,41 @@
+body {
+    background: linear-gradient(to right, #31b1ff 0%,#573dff 100%);
+}
 
 
-#board {
+#game-board {
     position: relative;
-    border: 1px solid black;
+    border: 2px solid white;
     margin: 0 auto;
 }
 
 .block {
     position: absolute;
-    border: 1px solid black;
-    box-sizing: border-box;
+    border: 1px solid #fdfdfd;
     width: 20px;
     height: 20px;
 }
 
-.block-color-red {
-    background: red;
+.block-type-red {
+    background: #d63031;
 }
 
-.block-color-blue {
-    background: blue;
+.block-type-blue {
+    background: #00b894;
 }
+
+#game-score {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    line-height: 40px;
+    position: relative;
+    top: 15px;
+    z-index: 2;
+    font-size: 10px;
+    background: white;
+    margin: 0 auto -5px;
+    width: 200px;
+    height: 40px;
+    border: 2px solid white;
+}
+
