@@ -200,7 +200,7 @@ function clearRows(boardSetup) {
         if (boardSetup[i][0]) {
             const pattern = boardSetup[i][0];
             const hasToBeClear = boardSetup[i].every(function (block) {
-                return block && block.run && block.type === pattern.type;
+                return block && !block.run && block.type === pattern.type;
             });
 
             if (hasToBeClear) {
