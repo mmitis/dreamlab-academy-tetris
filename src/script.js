@@ -1,12 +1,14 @@
+// basic configurations
 const Config = {
-    FIELDSIZE: 20,
-    WIDTH: 15,
-    HEIGHT: 25,
-    BLOCKS: 4,
-    BLOCKTYPES: ['red', 'blue'],
-    GAMESPEED: 150
+    FIELDSIZE: 20,                  // size of the fields
+    WIDTH: 15,                      // number of the fields in a row
+    HEIGHT: 25,                     // number of the rows
+    BLOCKS: 4,                      // size of the single segment
+    BLOCKTYPES: ['red', 'blue'],    // types of the blocks
+    GAMESPEED: 150                  // speed of the game loop interval
 };
 
+// keyCodes of the selected buttons
 const Keys = {
     ARROW_LEFT: 37,
     ARROW_RIGHT: 39,
@@ -71,6 +73,7 @@ function updateFields(boardSetup) {
  * @param {Array} boardSetup
  */
 function getElementsMoving(boardSetup) {
+    // little magic - look the reduce function in documentation on web :)
     return boardSetup.reduce((state, row) => {
         return state + row.reduce((state, field) => {
             return field && field.run === true ? state + 1 : state;
@@ -248,7 +251,9 @@ function findCornerElementMoving(boardSetup) {
     return {y: null, x: null};
 }
 
-
+/**
+ * Game initialization
+ */
 function runTheGame() {
     // pick the handler to the element in the HTML by ID ('#board')
     const boardRef = document.getElementById('game-board');
@@ -293,8 +298,7 @@ function runTheGame() {
         }
         //function will be executed each (Config.GAMESPEED) milliseconds
     }, Config.GAMESPEED);
-
-
 }
 
+// run it!
 runTheGame();
