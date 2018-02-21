@@ -1,7 +1,7 @@
 // basic configurations
 const Config = {
-    FIELDSIZE: 20,                  // size of the fields
-    WIDTH: 15,                      // number of the fields in a row
+    BLOCKSIZE: 20,                  // size of the blocks
+    WIDTH: 15,                      // number of the blocks in a row
     HEIGHT: 25,                     // number of the rows
     BLOCKS: 4,                      // size of the single segment
     BLOCKTYPES: ['red', 'blue'],    // types of the blocks
@@ -21,13 +21,13 @@ const Keys = {
  * @param {HTMLElement}     boardContainer - handler to dom element with board
  * @param {Number}          sizeX - size of the board X
  * @param {Number}          sizeY - size of the board Y
- * @param {Number}          fieldSize - size of the single field size in px
+ * @param {Number}          blockSize - size of the single block size in px
  * @returns {Array}
  */
-function setupBoard(boardContainer, sizeX, sizeY, fieldSize) {
+function setupBoard(boardContainer, sizeX, sizeY, blockSize) {
     //setup board
-    boardContainer.style.width = `${fieldSize * sizeX}px`;
-    boardContainer.style.height = `${fieldSize * sizeY}px`;
+    boardContainer.style.width = `${blockSize * sizeX}px`;
+    boardContainer.style.height = `${blockSize * sizeY}px`;
 
     // return empty array of block
     let boardArr = [];
@@ -42,25 +42,25 @@ function setupBoard(boardContainer, sizeX, sizeY, fieldSize) {
 }
 
 /**
- * Updates the fields which can fall
- * @param {Array}   boardSetup - array with the field data
+ * Updates the blocks which can fall
+ * @param {Array}   boardSetup - array with the block data
  */
-function updateFields(boardSetup) {
+function updateBlocksPositions(boardSetup) {
     for (let i = boardSetup.length - 1; i >= 0; i--) {
         for (let j = boardSetup[i].length - 1; j >= 0; j--) {
-            const field = boardSetup[i][j];
-            // if field is setup - manipulate it
-            if (field) {
+            const block = boardSetup[i][j];
+            // if blocks is setup - manipulate it
+            if (block) {
                 // check if something is below or there is a floor
                 const canMove = i + 1 < boardSetup.length && boardSetup[i + 1][j] == null;
                 if (canMove) {
                     // move to the bottom by one
-                    boardSetup[i + 1][j] = field;
+                    boardSetup[i + 1][j] = block;
                     boardSetup[i][j] = null;
                 } else {
                     // if element cannot move, and was controlled by user before - block it!
-                    if (field.run) {
-                        field.run = false;
+                    if (block.run) {
+                        block.run = false;
                     }
                 }
             }
@@ -69,41 +69,28 @@ function updateFields(boardSetup) {
 }
 
 /**
- * Gets the number of the blocks which have moving status
- * @param {Array} boardSetup
- */
-function getElementsMoving(boardSetup) {
-    // little magic - look the reduce function in documentation on web :)
-    return boardSetup.reduce((state, row) => {
-        return state + row.reduce((state, field) => {
-            return field && field.run === true ? state + 1 : state;
-        }, 0);
-    }, 0);
-}
-
-/**
  * Refresh the board in view
  * @param {HTMLElement} boardContainer - handler to element in DOM
- * @param {Array}       boardSetup - array with the field data
- * @param {Number}      fieldSize - size of the single field
+ * @param {Array}       boardSetup - array with the block data
+ * @param {Number}      blockSize - size of the single block
  */
-function drawBoard(boardContainer, boardSetup, fieldSize) {
+function drawBoard(boardContainer, boardSetup, blockSize) {
     boardContainer.innerHTML = '';
     boardSetup.forEach(function (row, columnIndex) {
-        row.forEach(function (field, rowIndex) {
-            if (field) {
+        row.forEach(function (blocks, rowIndex) {
+            if (blocks) {
                 let element = document.createElement('div');
                 // set absolute position with top/left CSS properties
-                element.style.top = `${fieldSize * columnIndex}px`;
-                element.style.left = `${fieldSize * rowIndex}px`;
+                element.style.top = `${blockSize * columnIndex}px`;
+                element.style.left = `${blockSize * rowIndex}px`;
 
                 // set size
-                element.style.width = `${fieldSize}px`;
-                element.style.height = `${fieldSize}px`;
+                element.style.width = `${blockSize}px`;
+                element.style.height = `${blockSize}px`;
 
                 // add classes
                 element.classList.add('block');
-                element.classList.add(`block-type-${field.type}`);
+                element.classList.add(`block-type-${blocks.type}`);
                 boardContainer.appendChild(element);
             }
         })
@@ -120,8 +107,8 @@ function drawScore(scoreContainer, score = 0) {
 }
 
 /**
- * Adds single block to the field data
- * @param {Array}       boardSetup - array with the field data
+ * Adds single block to the blocks data
+ * @param {Array}       boardSetup - array with the blocks data
  * @param {Number}      posX - position on the board X
  * @param {Number}      posY - position on the board Y
  * @param {Array}       blockTypes - types of the  block to use
@@ -139,11 +126,11 @@ function addBlock(boardSetup, posY, posX, blockTypes = Config.BLOCKTYPES) {
 
 /**
  * Adds segment (square of 4 blocks) to the board on the center of the top
- * @param {Array}       boardSetup - array with the field data
+ * @param {Array}       boardSetup - array with the blocks data
  */
 function addSegment(boardSetup) {
     // calculate the center of the board
-    const center = Math.floor(boardSetup[0].length / 2);
+    const center = Math.floor((boardSetup[0].length-1) / 2);
     // add 4 blocks
     addBlock(boardSetup, 0, center);
     addBlock(boardSetup, 1, center);
@@ -158,11 +145,11 @@ function moveLeft(boardSetup) {
     const canMove = coords.x - 1 >= 0 && boardSetup[coords.y][coords.x - 1] == null &&
         boardSetup[coords.y + 1][coords.x - 1] == null;
     if (canMove) {
-        // rewrite fields in top row
+        // rewrite blocks in top row
         boardSetup[coords.y][coords.x - 1] = boardSetup[coords.y][coords.x];
         boardSetup[coords.y][coords.x] = boardSetup[coords.y][coords.x + 1];
         boardSetup[coords.y][coords.x + 1] = null;
-        // rewrite fields in second row
+        // rewrite blocks in second row
         boardSetup[coords.y + 1][coords.x - 1] = boardSetup[coords.y + 1][coords.x];
         boardSetup[coords.y + 1][coords.x] = boardSetup[coords.y + 1][coords.x + 1];
         boardSetup[coords.y + 1][coords.x + 1] = null;
@@ -177,12 +164,12 @@ function moveRight(boardSetup) {
     const canMove = coords.x + 2 < boardSetup[coords.y].length && boardSetup[coords.y][coords.x + 2] == null &&
         boardSetup[coords.y + 1][coords.x + 2] == null;
     if (canMove) {
-        // rewrite fields in top row
+        // rewrite blocks in top row
         boardSetup[coords.y][coords.x + 2] = boardSetup[coords.y][coords.x + 1];
         boardSetup[coords.y][coords.x + 1] = boardSetup[coords.y][coords.x];
         boardSetup[coords.y][coords.x] = null;
 
-        // rewrite fields in second row
+        // rewrite blocks in second row
         boardSetup[coords.y + 1][coords.x + 2] = boardSetup[coords.y + 1][coords.x + 1];
         boardSetup[coords.y + 1][coords.x + 1] = boardSetup[coords.y + 1][coords.x];
         boardSetup[coords.y + 1][coords.x] = null;
@@ -191,7 +178,7 @@ function moveRight(boardSetup) {
 
 /**
  * Search for the row where all blocks are the same
- * @param {Array}       boardSetup - array with the field data
+ * @param {Array}       boardSetup - array with the blocks data
  * @returns {number}    rowsScored - number of the rows cleared
  */
 function clearRows(boardSetup) {
@@ -217,14 +204,14 @@ function clearRows(boardSetup) {
 
 /**
  * Rotates the moving segment
- * @param {Array}       boardSetup - array with the field data
+ * @param {Array}       boardSetup - array with the blocks data
  */
 function rotate(boardSetup) {
     // find top corner of the moving block
     const coords = findCornerElementMoving(boardSetup);
     // save single block as temporary
     const tmp = boardSetup[coords.y][coords.x];
-    // rewrite all fields 'by one' to rotate
+    // rewrite all blocks 'by one' to rotate
     boardSetup[coords.y][coords.x] = boardSetup[coords.y][coords.x + 1];
     boardSetup[coords.y][coords.x + 1] = boardSetup[coords.y + 1][coords.x + 1];
     boardSetup[coords.y + 1][coords.x + 1] = boardSetup[coords.y + 1][coords.x];
@@ -233,7 +220,7 @@ function rotate(boardSetup) {
 
 /**
  * Finds the top left corner of the moving segment
- * @param {Array}       boardSetup - array with the field data
+ * @param {Array}       boardSetup - array with the blocks data
  * @returns {{ x: Number|null, y: Number|null }}
  */
 function findCornerElementMoving(boardSetup) {
@@ -259,7 +246,7 @@ function runTheGame() {
     const boardRef = document.getElementById('game-board');
     const scoreRef = document.getElementById('game-score');
     // create new empty array for the game - with selected configuration (width, height of the board, size of the single block)
-    const boardSetup = setupBoard(boardRef, Config.WIDTH, Config.HEIGHT, Config.FIELDSIZE);
+    const boardSetup = setupBoard(boardRef, Config.WIDTH, Config.HEIGHT, Config.BLOCKSIZE);
 
     let score = 0;
 
@@ -286,9 +273,9 @@ function runTheGame() {
     // run game loop. Reference is saved to the variable for the future use.
     const gameLoopInterval = setInterval(function () {
         // draw current state of the board
-        drawBoard(boardRef, boardSetup, Config.FIELDSIZE);
-        // make all updates of the fields
-        updateFields(boardSetup);
+        drawBoard(boardRef, boardSetup, Config.BLOCKSIZE);
+        // make all updates of the blocks
+        updateBlocksPositions(boardSetup);
         score += clearRows(boardSetup);
         drawScore(scoreRef, score);
         // if there is no element which is moving - create the new one
